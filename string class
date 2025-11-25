@@ -1,0 +1,102 @@
+#include <cstring>   // std::strlen, std::strcpy, std::strcat
+#include <iostream>
+
+class String {
+private:
+    char* data;
+    std::size_t len;
+
+public:
+    // Default constructor
+    String() : data(nullptr), len(0) {}
+
+    // Construct from C-string
+    String(const char* s) {
+        if (s) {
+            len = std::strlen(s);
+            data = new char[len + 1];
+            std::strcpy(data, s);
+        } else {
+            data = nullptr;
+            len = 0;
+        }
+    }
+
+    // Destructor
+    ~String() {
+        delete[] data;
+    }
+
+    // Copy constructor (deep copy)
+    String(const String& other) : len(other.len) {
+        if (other.data) {
+            data = new char[len + 1];
+            std::strcpy(data, other.data);
+        } else {
+            data = nullptr;
+        }
+    }
+
+    // Copy assignment (deep copy)
+    String& operator=(const String& other) {
+        if (this != &other) {
+            delete[] data;           // free old
+            len = other.len;
+            if (other.data) {
+                data = new char[len + 1];
+                std::strcpy(data, other.data);
+            } else {
+                data = nullptr;
+            }
+        }
+        return *this;
+    }
+
+    // Move constructor
+    String(String&& other) noexcept : data(other.data), len(other.len) {
+        other.data = nullptr;
+        other.len = 0;
+    }
+
+    // Move assignment
+    String& operator=(String&& other) noexcept {
+        if (this != &other) {
+            delete[] data;      // free old
+
+            data = other.data;
+            len  = other.len;
+
+            other.data = nullptr;
+            other.len  = 0;
+        }
+        return *this;
+    }
+
+    // Element access
+    char& operator[](std::size_t i) { return data[i]; }
+    const char& operator[](std::size_t i) const { return data[i]; }
+
+    // Size and c_str
+    std::size_t size() const { return len; }
+    const char* c_str() const { return data ? data : ""; }
+
+    // Concatenation
+    friend String operator+(const String& a, const String& b) {
+        String result;
+        result.len = a.len + b.len;
+        result.data = new char[result.len + 1];
+        std::strcpy(result.data, a.c_str());
+        std::strcat(result.data, b.c_str());
+        return result;   // NRVO / move
+    }
+};
+
+// Small demo
+int main() {
+    String s1("Hello");
+    String s2(" World");
+    String s3 = s1 + s2;
+
+    std::cout << s3.c_str() << "\n";      // Hello World
+    std::cout << "len = " << s3.size();   // 11
+}
